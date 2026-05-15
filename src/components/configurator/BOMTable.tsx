@@ -110,7 +110,7 @@ export function BOMTable({ config }: Props) {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="pill bg-surface-elevated font-mono text-[9px] text-ink-soft border border-hairline">
-                        {item.edgeBand === 2 ? "2.0 мм" : "0.4 мм"}
+                        {item.edgeBand === 0 ? "—" : item.edgeBand === 2 ? "2.0 мм" : "0.4 мм"}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-right">

@@ -7,6 +7,7 @@ import {
   Unlock as UnlockIcon,
   MousePointerClick,
   AlertTriangle,
+  ChevronDown,
 } from "lucide-react";
 import type {
   CabinetConfig,
@@ -25,7 +26,7 @@ import {
   getInnerHeight,
   getInnerWidth,
 } from "./types";
-import type { AssemblyType, BackPanelType, DrawerExtensionType } from "./types";
+import type { AssemblyType, BackPanelType, DrawerExtensionType, HingeType } from "./types";
 
 interface Props {
   config: CabinetConfig;
@@ -43,7 +44,7 @@ interface Props {
   onShelfPositionChange: (colId: string, zoneId: string, pos: number) => void;
   onSectionsCountChange: (colId: string, zoneId: string, count: number) => void;
   onShelvesCountChange: (colId: string, zoneId: string, count: number) => void;
-  onHingeChange: (colId: string, doorId: string, hinge: import("./types").HingeType) => void;
+  onHingeChange: (colId: string, doorId: string, hinge: HingeType) => void;
   onDoorToggleOpen: (colId: string, doorId: string) => void;
   onToggleLockColumn: (colId: string) => void;
   onToggleLockZone: (colId: string, zoneId: string) => void;
@@ -141,15 +142,15 @@ export function ConfigSidebar({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       {/* Header */}
-      <div>
+      <div className="mb-2">
         <div className="label-eyebrow mb-1">Конфигуратор</div>
         <div className="font-display text-[22px] font-semibold tracking-tight">Параметры</div>
       </div>
 
       {warnings.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1.5">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1.5 mb-1">
           {warnings.map((w, i) => (
             <div
               key={i}
@@ -163,7 +164,7 @@ export function ConfigSidebar({
       )}
 
       {/* ═══ ГАБАРИТЫ И ПРЕСЕТЫ ═══ */}
-      <Section eyebrow="Габариты и пресеты">
+      <CollapsibleGroup title="Габариты и пресеты" defaultOpen>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: "Пустой", cols: 1, rows: 1 },
@@ -283,12 +284,10 @@ export function ConfigSidebar({
             onChange={(v) => onSetAllRowSegments(v)}
           />
         </div>
-      </Section>
+      </CollapsibleGroup>
 
-      <div className="hairline" />
-
-      {/* ═══ МАТЕРИАЛ ═══ */}
-      <Section eyebrow="Материал">
+      {/* ═══ МАТЕРИАЛ И КОНСТРУКЦИЯ ═══ */}
+      <CollapsibleGroup title="Материал и конструкция">
         <div className="grid grid-cols-4 gap-2">
           {TEXTURES.map((t) => (
             <button
@@ -318,12 +317,7 @@ export function ConfigSidebar({
             </button>
           ))}
         </div>
-      </Section>
-
-      <div className="hairline" />
-
-      {/* ═══ КОНСТРУКЦИЯ ═══ */}
-      <Section eyebrow="Конструкция корпуса">
+      <Section eyebrow="Толщина ЛДСП">
         <div className="space-y-2">
           <div className="flex items-center justify-between bg-[#F3F1EC] rounded-xl px-4 py-2 cursor-default">
             <span className="text-sm text-ink-soft font-medium">Толщина ЛДСП</span>
@@ -344,7 +338,6 @@ export function ConfigSidebar({
           />
         </div>
       </Section>
-
       <Section eyebrow="Тип сборки">
         <Segmented<AssemblyType>
           options={[
@@ -355,7 +348,10 @@ export function ConfigSidebar({
           onChange={(v) => update({ assemblyType: v })}
         />
       </Section>
+      </CollapsibleGroup>
 
+      {/* ═══ КОРПУС ═══ */}
+      <CollapsibleGroup title="Корпус">
       <Section eyebrow="Внешние панели">
         <div className="grid grid-cols-2 gap-x-6 gap-y-3">
           <Toggle
@@ -408,7 +404,6 @@ export function ConfigSidebar({
           />
         </div>
       </Section>
-
       <Section eyebrow="Опора / Цоколь">
         <div className="space-y-3">
           <Segmented<import("./types").BaseType>
@@ -442,7 +437,6 @@ export function ConfigSidebar({
           )}
         </div>
       </Section>
-
       <Section eyebrow="Задняя стенка">
         <Segmented<BackPanelType>
           options={[
@@ -455,8 +449,7 @@ export function ConfigSidebar({
           onChange={(v) => update({ backPanel: { ...config.backPanel, type: v } })}
         />
       </Section>
-
-      <div className="hairline" />
+      </CollapsibleGroup>
 
       {/* ═══ SELECTED CELL ═══ */}
       {!selected ? (
@@ -467,7 +460,7 @@ export function ConfigSidebar({
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <CollapsibleGroup title="Выбранная ячейка" defaultOpen>
           <Section eyebrow="Наполнение">
             <Segmented<CellFill>
               options={[
@@ -599,7 +592,7 @@ export function ConfigSidebar({
                     }`}
                   >
                     {selectedZone?.isLocked ? <LockIcon size={12} /> : <UnlockIcon size={12} />}
-                    {selectedZone?.isLocked ? "Зафикс." : "Зафикс."}
+                    {selectedZone?.isLocked ? "Зафикс." : "Фиксир."}
                   </button>
                   <button
                     onClick={() => onSplitZone(selected.colId, selected.zoneId)}
@@ -626,10 +619,8 @@ export function ConfigSidebar({
               Удалить секцию
             </button>
           </div>
-        </div>
+        </CollapsibleGroup>
       )}
-
-      <div className="hairline" />
 
       {/* ═══ PRICE ═══ */}
       <div
@@ -670,6 +661,43 @@ function Section({ eyebrow, children }: { eyebrow: string; children: React.React
         {eyebrow}
       </div>
       {children}
+    </div>
+  );
+}
+
+function CollapsibleGroup({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-2xl border border-hairline bg-surface overflow-hidden transition-shadow hover:shadow-sm">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 cursor-pointer group transition-colors hover:bg-black/[0.02]"
+      >
+        <span className="text-[13px] font-semibold text-ink tracking-tight">{title}</span>
+        <ChevronDown
+          size={16}
+          className={`text-ink-mute transition-transform duration-300 ${
+            isOpen ? "rotate-180" : "rotate-0"
+          }`}
+        />
+      </button>
+      <div
+        className={`collapsible-content ${
+          isOpen ? "collapsible-content--open" : "collapsible-content--closed"
+        }`}
+      >
+        <div className="px-4 pb-4 space-y-4">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { CabinetSVG } from "./CabinetSVG";
 import { ConfigSidebar } from "./ConfigSidebar";
 import { BOMTable } from "./BOMTable";
-import type { CabinetConfig, CellFill, SelectedCell, DoorType, DoorInstallation } from "./types";
+import type { CabinetConfig, CellFill, SelectedCell, DoorType, DoorInstallation, DrawerExtensionType } from "./types";
 import {
   createDefaultColumns,
   getInnerHeight,
@@ -15,25 +15,7 @@ import {
 import type { Zone } from "./types";
 import { useCabinetStore } from "../../store/cabinetStore";
 
-const INITIAL: CabinetConfig = {
-  height: 1800,
-  width: 1200,
-  depth: 400,
-  columns: createDefaultColumns(1, 1200, 1800, 16, 16, 16, 16, 16),
-  texture: "white",
-  globalThickness: 16,
-  assemblyType: "top-bottom-overlap",
-  outerPanels: {
-    top: { isVisible: true },
-    bottom: { isVisible: true },
-    left: { isVisible: true },
-    right: { isVisible: true },
-  },
-  backPanel: {
-    type: "none",
-    grooveInset: 20,
-  },
-};
+
 
 export function FurnitureConfigurator() {
   const config = useCabinetStore((state) => state.config);
@@ -50,6 +32,7 @@ export function FurnitureConfigurator() {
   const [isSpaceDown, setIsSpaceDown] = useState(false);
   const isDraggingPan = useRef(false);
   const isSpaceDownRef = useRef(false);
+  const startPanPos = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Keep ref in sync for event listeners
