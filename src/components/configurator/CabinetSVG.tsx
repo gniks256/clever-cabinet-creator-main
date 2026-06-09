@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { motion } from "framer-motion";
 import type { CabinetConfig, SelectedCell, CellFill } from "./types";
 import {
@@ -22,7 +22,7 @@ interface Props {
   hoveringDelete?: boolean;
 }
 
-export function CabinetSVG({
+export const CabinetSVG = memo(function CabinetSVG({
   config,
   selected,
   onSelectCell,
@@ -283,7 +283,12 @@ export function CabinetSVG({
     setSelectionBox(null);
   };
 
-  const handleCellClick = (e: React.MouseEvent, colId: string, zoneId: string, sectionIdx?: number) => {
+  const handleCellClick = (
+    e: React.MouseEvent,
+    colId: string,
+    zoneId: string,
+    sectionIdx?: number,
+  ) => {
     e.stopPropagation();
     onSelectCell(colId, zoneId, e.shiftKey || e.metaKey || e.ctrlKey, sectionIdx);
   };
@@ -318,7 +323,11 @@ export function CabinetSVG({
       <g key={`vdiv-${i}`}>
         {segments.map((s, si) => (
           <g key={si}>
-            <path d={`M${divX + boardT},${s.y} L${divX + boardT + depthOffset},${s.y - depthOffset} L${divX + boardT + depthOffset},${s.y + s.h - depthOffset} L${divX + boardT},${s.y + s.h} Z`} fill="url(#gradSide)" opacity={0.4} />
+            <path
+              d={`M${divX + boardT},${s.y} L${divX + boardT + depthOffset},${s.y - depthOffset} L${divX + boardT + depthOffset},${s.y + s.h - depthOffset} L${divX + boardT},${s.y + s.h} Z`}
+              fill="url(#gradSide)"
+              opacity={0.4}
+            />
             <rect
               x={divX}
               y={s.y}
@@ -415,40 +424,69 @@ export function CabinetSVG({
         />
 
         {/* 1.5 Back Legs */}
-        {config.base && (config.base.type === "legs-round" || config.base.type === "legs-square") && (() => {
-          const legsCount = config.base.legsCountX ?? (Math.ceil(width / 600) + 1);
-          const spacing = (cabinetW - 40 * scale) / Math.max(1, legsCount - 1);
-          const legs = [];
-          const isRound = config.base.type === "legs-round";
-          const legW = 30 * scale;
-          const backZOffset = depthOffset - 20 * (depthOffset / depth);
-          for (let i = 0; i < legsCount; i++) {
-            const cx = ox + 20 * scale + i * spacing + backZOffset;
-            const cy = oy + cabinetH - backZOffset;
-            if (isRound) {
-              legs.push(
-                <rect key={`back-leg-${i}`} x={cx - legW/2} y={cy} width={legW} height={baseH} rx={legW/2} fill="#8A8A8A" stroke="#505050" strokeWidth={0.5} />
-              );
-            } else {
-              legs.push(
-                <rect key={`back-leg-${i}`} x={cx - legW/2} y={cy} width={legW} height={baseH} fill="#8A8A8A" stroke="#505050" strokeWidth={0.5} />
-              );
+        {config.base &&
+          (config.base.type === "legs-round" || config.base.type === "legs-square") &&
+          (() => {
+            const legsCount = config.base.legsCountX ?? Math.ceil(width / 600) + 1;
+            const spacing = (cabinetW - 40 * scale) / Math.max(1, legsCount - 1);
+            const legs = [];
+            const isRound = config.base.type === "legs-round";
+            const legW = 30 * scale;
+            const backZOffset = depthOffset - 20 * (depthOffset / depth);
+            for (let i = 0; i < legsCount; i++) {
+              const cx = ox + 20 * scale + i * spacing + backZOffset;
+              const cy = oy + cabinetH - backZOffset;
+              if (isRound) {
+                legs.push(
+                  <rect
+                    key={`back-leg-${i}`}
+                    x={cx - legW / 2}
+                    y={cy}
+                    width={legW}
+                    height={baseH}
+                    rx={legW / 2}
+                    fill="#8A8A8A"
+                    stroke="#505050"
+                    strokeWidth={0.5}
+                  />,
+                );
+              } else {
+                legs.push(
+                  <rect
+                    key={`back-leg-${i}`}
+                    x={cx - legW / 2}
+                    y={cy}
+                    width={legW}
+                    height={baseH}
+                    fill="#8A8A8A"
+                    stroke="#505050"
+                    strokeWidth={0.5}
+                  />,
+                );
+              }
             }
-          }
-          return legs;
-        })()}
+            return legs;
+          })()}
 
         {/* 3. Inner Box and Back Panel */}
         <g>
           {/* Inner Left Wall */}
           {config.outerPanels.left.isVisible && (
-            <path d={`M${ox + leftT},${oy + topT} L${ox + leftT + depthOffset},${oy + topT - depthOffset} L${ox + leftT + depthOffset},${oy + topT + innerH * scale - depthOffset} L${ox + leftT},${oy + topT + innerH * scale} Z`} fill="url(#gradSide)" opacity={0.6} />
+            <path
+              d={`M${ox + leftT},${oy + topT} L${ox + leftT + depthOffset},${oy + topT - depthOffset} L${ox + leftT + depthOffset},${oy + topT + innerH * scale - depthOffset} L${ox + leftT},${oy + topT + innerH * scale} Z`}
+              fill="url(#gradSide)"
+              opacity={0.6}
+            />
           )}
           {/* Inner Bottom Wall */}
           {config.outerPanels.bottom.isVisible && (
-            <path d={`M${ox + leftT},${oy + topT + innerH * scale} L${ox + leftT + depthOffset},${oy + topT + innerH * scale - depthOffset} L${ox + cabinetW - rightT + depthOffset},${oy + topT + innerH * scale - depthOffset} L${ox + cabinetW - rightT},${oy + topT + innerH * scale} Z`} fill="url(#gradTop)" opacity={0.4} />
+            <path
+              d={`M${ox + leftT},${oy + topT + innerH * scale} L${ox + leftT + depthOffset},${oy + topT + innerH * scale - depthOffset} L${ox + cabinetW - rightT + depthOffset},${oy + topT + innerH * scale - depthOffset} L${ox + cabinetW - rightT},${oy + topT + innerH * scale} Z`}
+              fill="url(#gradTop)"
+              opacity={0.4}
+            />
           )}
-          
+
           {config.backPanel.type !== "none" && (
             <g>
               <rect
@@ -472,40 +510,41 @@ export function CabinetSVG({
         {/* Base / Legs / Plinth */}
         {config.base && config.base.type !== "none" && (
           <g>
-            {config.base.type === "plinth" && (() => {
-              const pIndent = 20 * scale;
-              const pZIndent = 20 * (depthOffset / depth);
-              const pRX = ox + cabinetW - pIndent;
-              const pY = oy + cabinetH;
-              const pdX = depthOffset - pZIndent;
-              const pdY = depthOffset - pZIndent;
-              const rightSidePath = `M${pRX},${pY} L${pRX + pdX},${pY - pdY} L${pRX + pdX},${pY + baseH - pdY} L${pRX},${pY + baseH} Z`;
-              
-              return (
-                <g>
-                  {/* Front Face */}
-                  <rect 
-                    x={ox + pIndent} 
-                    y={pY} 
-                    width={cabinetW - pIndent * 2} 
-                    height={baseH} 
-                    fill={wC.sideD}
-                    stroke={strokeColor} 
-                    strokeWidth={0.5} 
-                  />
-                  {/* Right Side Face */}
-                  <path 
-                    d={rightSidePath} 
-                    fill={wC.sideD}
-                    stroke={strokeColor} 
-                    strokeWidth={0.5} 
-                  />
-                </g>
-              );
-            })()}
+            {config.base.type === "plinth" &&
+              (() => {
+                const pIndent = 20 * scale;
+                const pZIndent = 20 * (depthOffset / depth);
+                const pRX = ox + cabinetW - pIndent;
+                const pY = oy + cabinetH;
+                const pdX = depthOffset - pZIndent;
+                const pdY = depthOffset - pZIndent;
+                const rightSidePath = `M${pRX},${pY} L${pRX + pdX},${pY - pdY} L${pRX + pdX},${pY + baseH - pdY} L${pRX},${pY + baseH} Z`;
+
+                return (
+                  <g>
+                    {/* Front Face */}
+                    <rect
+                      x={ox + pIndent}
+                      y={pY}
+                      width={cabinetW - pIndent * 2}
+                      height={baseH}
+                      fill={wC.sideD}
+                      stroke={strokeColor}
+                      strokeWidth={0.5}
+                    />
+                    {/* Right Side Face */}
+                    <path
+                      d={rightSidePath}
+                      fill={wC.sideD}
+                      stroke={strokeColor}
+                      strokeWidth={0.5}
+                    />
+                  </g>
+                );
+              })()}
             {(config.base.type === "legs-round" || config.base.type === "legs-square") &&
               (() => {
-                const legsCount = config.base.legsCountX ?? (Math.ceil(width / 600) + 1);
+                const legsCount = config.base.legsCountX ?? Math.ceil(width / 600) + 1;
                 const spacing = (cabinetW - 40 * scale) / Math.max(1, legsCount - 1);
                 const legs = [];
                 const isRound = config.base.type === "legs-round";
@@ -571,7 +610,9 @@ export function CabinetSVG({
                 for (let s = 1; s < span; s++)
                   actualW += (columns[cIdx + s]?.width || 0) + config.globalThickness;
                 const wScale = actualW * scale;
-                const isSelected = selected.some((s) => s.colId === col.id && s.zoneId === zone.id && s.sectionIdx === undefined);
+                const isSelected = selected.some(
+                  (s) => s.colId === col.id && s.zoneId === zone.id && s.sectionIdx === undefined,
+                );
 
                 return (
                   <g key={zone.id}>
@@ -586,13 +627,17 @@ export function CabinetSVG({
                         className="cursor-pointer"
                         onClick={(e) => handleCellClick(e, col.id, zone.id)}
                         whileHover={{
-                          fill: isSelected ? "hsl(var(--accent) / 0.25)" : "hsl(var(--accent) / 0.1)",
+                          fill: isSelected
+                            ? "hsl(var(--accent) / 0.25)"
+                            : "hsl(var(--accent) / 0.1)",
                         }}
                       />
                     )}
 
                     {/* Internal Horizontal Shelves (from counter) */}
-                    {zone.shelvesCount && zone.shelvesCount > 1 && !zone.sections && (
+                    {zone.shelvesCount &&
+                      zone.shelvesCount > 1 &&
+                      !zone.sections &&
                       (() => {
                         const count = zone.shelvesCount;
                         const shelfNodes = [];
@@ -601,14 +646,25 @@ export function CabinetSVG({
                           const sY = zY + i * spacing + (i - 1) * boardT;
                           shelfNodes.push(
                             <g key={`hz-shelf-${i}`}>
-                              <path d={`M${col.x},${sY} L${col.x + depthOffset},${sY - depthOffset} L${col.x + wScale + depthOffset},${sY - depthOffset} L${col.x + wScale},${sY} Z`} fill="url(#gradTop)" opacity={0.6} />
-                              <rect x={col.x} y={sY} width={wScale} height={boardT} fill={fillFront} stroke={strokeColor} strokeWidth={0.6} />
-                            </g>
+                              <path
+                                d={`M${col.x},${sY} L${col.x + depthOffset},${sY - depthOffset} L${col.x + wScale + depthOffset},${sY - depthOffset} L${col.x + wScale},${sY} Z`}
+                                fill="url(#gradTop)"
+                                opacity={0.6}
+                              />
+                              <rect
+                                x={col.x}
+                                y={sY}
+                                width={wScale}
+                                height={boardT}
+                                fill={fillFront}
+                                stroke={strokeColor}
+                                strokeWidth={0.6}
+                              />
+                            </g>,
                           );
                         }
                         return shelfNodes;
-                      })()
-                    )}
+                      })()}
 
                     {isSelected && !(zone.sections && zone.sections.length > 1) && (
                       <rect
@@ -669,87 +725,158 @@ export function CabinetSVG({
                         const count = zone.sections.length;
                         const secW = (wScale - (count - 1) * boardT) / count;
                         const sectionsNodes = [];
-                        
+
                         for (let i = 0; i < count; i++) {
-                           const secX = col.x + i * secW + i * boardT;
-                           const sec = zone.sections[i];
-                           const isSecSelected = selected.some((s) => s.colId === col.id && s.zoneId === zone.id && s.sectionIdx === i);
+                          const secX = col.x + i * secW + i * boardT;
+                          const sec = zone.sections[i];
+                          const isSecSelected = selected.some(
+                            (s) => s.colId === col.id && s.zoneId === zone.id && s.sectionIdx === i,
+                          );
 
-                           sectionsNodes.push(
-                             <g key={`sec-${i}`}>
-                               <motion.rect
-                                  x={secX}
-                                  y={zY}
-                                  width={secW}
-                                  height={zH}
-                                  fill={isSecSelected ? selectionColor : "transparent"}
-                                  className="cursor-pointer"
-                                  onClick={(e) => handleCellClick(e, col.id, zone.id, i)}
-                                  whileHover={{
-                                    fill: isSecSelected ? "hsl(var(--accent) / 0.25)" : "hsl(var(--accent) / 0.1)",
-                                  }}
+                          sectionsNodes.push(
+                            <g key={`sec-${i}`}>
+                              <motion.rect
+                                x={secX}
+                                y={zY}
+                                width={secW}
+                                height={zH}
+                                fill={isSecSelected ? selectionColor : "transparent"}
+                                className="cursor-pointer"
+                                onClick={(e) => handleCellClick(e, col.id, zone.id, i)}
+                                whileHover={{
+                                  fill: isSecSelected
+                                    ? "hsl(var(--accent) / 0.25)"
+                                    : "hsl(var(--accent) / 0.1)",
+                                }}
+                              />
+                              {isSecSelected && (
+                                <rect
+                                  x={secX + 0.5}
+                                  y={zY + 0.5}
+                                  width={secW - 1}
+                                  height={zH - 1}
+                                  fill="none"
+                                  stroke={selectionStroke}
+                                  strokeWidth={2}
+                                  pointerEvents="none"
                                 />
-                                {isSecSelected && (
-                                  <rect
-                                    x={secX + 0.5}
-                                    y={zY + 0.5}
-                                    width={secW - 1}
-                                    height={zH - 1}
-                                    fill="none"
-                                    stroke={selectionStroke}
-                                    strokeWidth={2}
-                                    pointerEvents="none"
+                              )}
+                              {/* Section fill */}
+                              {sec.fill === "shelf" && (
+                                <g>
+                                  <path
+                                    d={`M${secX},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2} L${secX + depthOffset},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${secX + secW + depthOffset},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${secX + secW},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2} Z`}
+                                    fill="url(#gradTop)"
+                                    opacity={0.6}
                                   />
-                                )}
-                                {/* Section fill */}
-                                {sec.fill === "shelf" && (
-                                  <g>
-                                    <path d={`M${secX},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2} L${secX + depthOffset},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${secX + secW + depthOffset},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${secX + secW},${zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2} Z`} fill="url(#gradTop)" opacity={0.6} />
-                                    <rect x={secX} y={zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2} width={secW} height={boardT} fill={fillFront} stroke={strokeColor} strokeWidth={0.6} />
-                                  </g>
-                                )}
-                                {sec.fill === "drawer" && (
-                                  <g>
-                                    {/* 3D Drawer box placeholder inside */}
-                                    <path d={`M${secX + 2},${zY + zH - 2} L${secX + 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2},${zY + zH - 2} Z`} fill="#E0DCD3" opacity={0.8} />
-                                    <path d={`M${secX + 2 + depthOffset},${zY + 2 - depthOffset} L${secX + 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2 + depthOffset},${zY + 2 - depthOffset} Z`} fill="#D5D0C5" opacity={0.8} />
-                                    {/* Front facade */}
-                                    <rect x={secX + 2} y={zY + 2} width={secW - 4} height={zH - 4} fill={fillFront} stroke={strokeColor} strokeWidth={0.8} />
-                                    <line x1={secX + 2} y1={zY + 2} x2={secX + secW - 2} y2={zY + 2} stroke="#FFFFFF" strokeWidth={1} opacity={0.5} />
-                                    <rect x={secX + secW / 2 - 20} y={zY + zH / 2 - 2} width={40} height={4} rx={2} fill="#A0A0A0" />
-                                  </g>
-                                )}
-                                {/* Section internal shelves */}
-                                {zone.shelvesCount && zone.shelvesCount > 1 && (
-                                  (() => {
-                                    const count = zone.shelvesCount;
-                                    const shelfNodes = [];
-                                    const spacing = (zH - (count - 1) * boardT) / count;
-                                    for (let i = 1; i < count; i++) {
-                                      const sY = zY + i * spacing + (i - 1) * boardT;
-                                      shelfNodes.push(
-                                        <g key={`sec-hz-shelf-${i}`}>
-                                          <path d={`M${secX},${sY} L${secX + depthOffset},${sY - depthOffset} L${secX + secW + depthOffset},${sY - depthOffset} L${secX + secW},${sY} Z`} fill="url(#gradTop)" opacity={0.6} />
-                                          <rect x={secX} y={sY} width={secW} height={boardT} fill={fillFront} stroke={strokeColor} strokeWidth={0.6} />
-                                        </g>
-                                      );
-                                    }
-                                    return shelfNodes;
-                                  })()
-                                )}
-                             </g>
-                           );
-
-                           // Draw vertical divider AFTER this section (except for the last one)
-                           if (i < count - 1) {
-                              const divX = secX + secW;
-                              sectionsNodes.push(
-                                <g key={`vdiv-${i}`} pointerEvents="none">
-                                  <path d={`M${divX},${zY} L${divX + depthOffset},${zY - depthOffset} L${divX + depthOffset},${zY + zH - depthOffset} L${divX},${zY + zH} Z`} fill="url(#gradSide)" opacity={0.6} />
-                                  <rect x={divX} y={zY} width={boardT} height={zH} fill={fillFront} stroke={strokeColor} strokeWidth={0.6} />
+                                  <rect
+                                    x={secX}
+                                    y={zY + zH * (sec.shelfPosition ?? 0.5) - boardT / 2}
+                                    width={secW}
+                                    height={boardT}
+                                    fill={fillFront}
+                                    stroke={strokeColor}
+                                    strokeWidth={0.6}
+                                  />
                                 </g>
-                              );
-                           }
+                              )}
+                              {sec.fill === "drawer" && (
+                                <g>
+                                  {/* 3D Drawer box placeholder inside */}
+                                  <path
+                                    d={`M${secX + 2},${zY + zH - 2} L${secX + 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2},${zY + zH - 2} Z`}
+                                    fill="#E0DCD3"
+                                    opacity={0.8}
+                                  />
+                                  <path
+                                    d={`M${secX + 2 + depthOffset},${zY + 2 - depthOffset} L${secX + 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2 + depthOffset},${zY + zH - 2 - depthOffset} L${secX + secW - 2 + depthOffset},${zY + 2 - depthOffset} Z`}
+                                    fill="#D5D0C5"
+                                    opacity={0.8}
+                                  />
+                                  {/* Front facade */}
+                                  <rect
+                                    x={secX + 2}
+                                    y={zY + 2}
+                                    width={secW - 4}
+                                    height={zH - 4}
+                                    fill={fillFront}
+                                    stroke={strokeColor}
+                                    strokeWidth={0.8}
+                                  />
+                                  <line
+                                    x1={secX + 2}
+                                    y1={zY + 2}
+                                    x2={secX + secW - 2}
+                                    y2={zY + 2}
+                                    stroke="#FFFFFF"
+                                    strokeWidth={1}
+                                    opacity={0.5}
+                                  />
+                                  <rect
+                                    x={secX + secW / 2 - 20}
+                                    y={zY + zH / 2 - 2}
+                                    width={40}
+                                    height={4}
+                                    rx={2}
+                                    fill="#A0A0A0"
+                                  />
+                                </g>
+                              )}
+                              {/* Section internal shelves */}
+                              {zone.shelvesCount &&
+                                zone.shelvesCount > 1 &&
+                                (() => {
+                                  const count = zone.shelvesCount;
+                                  const shelfNodes = [];
+                                  const spacing = (zH - (count - 1) * boardT) / count;
+                                  for (let i = 1; i < count; i++) {
+                                    const sY = zY + i * spacing + (i - 1) * boardT;
+                                    shelfNodes.push(
+                                      <g key={`sec-hz-shelf-${i}`}>
+                                        <path
+                                          d={`M${secX},${sY} L${secX + depthOffset},${sY - depthOffset} L${secX + secW + depthOffset},${sY - depthOffset} L${secX + secW},${sY} Z`}
+                                          fill="url(#gradTop)"
+                                          opacity={0.6}
+                                        />
+                                        <rect
+                                          x={secX}
+                                          y={sY}
+                                          width={secW}
+                                          height={boardT}
+                                          fill={fillFront}
+                                          stroke={strokeColor}
+                                          strokeWidth={0.6}
+                                        />
+                                      </g>,
+                                    );
+                                  }
+                                  return shelfNodes;
+                                })()}
+                            </g>,
+                          );
+
+                          // Draw vertical divider AFTER this section (except for the last one)
+                          if (i < count - 1) {
+                            const divX = secX + secW;
+                            sectionsNodes.push(
+                              <g key={`vdiv-${i}`} pointerEvents="none">
+                                <path
+                                  d={`M${divX},${zY} L${divX + depthOffset},${zY - depthOffset} L${divX + depthOffset},${zY + zH - depthOffset} L${divX},${zY + zH} Z`}
+                                  fill="url(#gradSide)"
+                                  opacity={0.6}
+                                />
+                                <rect
+                                  x={divX}
+                                  y={zY}
+                                  width={boardT}
+                                  height={zH}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={0.6}
+                                />
+                              </g>,
+                            );
+                          }
                         }
                         return sectionsNodes;
                       })()
@@ -757,7 +884,11 @@ export function CabinetSVG({
                       <g pointerEvents="none">
                         {zone.fill === "shelf" && (
                           <g>
-                            <path d={`M${col.x},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2} L${col.x + depthOffset},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${col.x + wScale + depthOffset},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${col.x + wScale},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2} Z`} fill="url(#gradTop)" opacity={0.6} />
+                            <path
+                              d={`M${col.x},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2} L${col.x + depthOffset},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${col.x + wScale + depthOffset},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2 - depthOffset} L${col.x + wScale},${zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2} Z`}
+                              fill="url(#gradTop)"
+                              opacity={0.6}
+                            />
                             <rect
                               x={col.x}
                               y={zY + zH * (zone.shelfPosition ?? 0.5) - boardT / 2}
@@ -769,194 +900,195 @@ export function CabinetSVG({
                             />
                           </g>
                         )}
-                    {zone.fill === "drawer" &&
-                      (() => {
-                        const guideGap = (zone.drawerExtension === "roller" ? 12.5 : 13) * scale;
-                        const boxMat = config.globalThickness * scale;
-                        const boxH = zH - 44 * scale;
-                        const boxY = zY + 20 * scale;
-                        const outerX = col.x + guideGap;
-                        const outerW = wScale - 2 * guideGap;
-                        const innerX = outerX + boxMat;
-                        const innerW = outerW - 2 * boxMat;
-                        const innerY = boxY;
-                        const innerH = boxH - boxMat;
-                        const handleW = 24 * scale;
-                        const handleY = zY + 12 * scale;
-                        const gap = 1;
+                        {zone.fill === "drawer" &&
+                          (() => {
+                            const guideGap =
+                              (zone.drawerExtension === "roller" ? 12.5 : 13) * scale;
+                            const boxMat = config.globalThickness * scale;
+                            const boxH = zH - 44 * scale;
+                            const boxY = zY + 20 * scale;
+                            const outerX = col.x + guideGap;
+                            const outerW = wScale - 2 * guideGap;
+                            const innerX = outerX + boxMat;
+                            const innerW = outerW - 2 * boxMat;
+                            const innerY = boxY;
+                            const innerH = boxH - boxMat;
+                            const handleW = 24 * scale;
+                            const handleY = zY + 12 * scale;
+                            const gap = 1;
 
-                        return (
-                          <g pointerEvents="none">
-                            {/* Inner Drawer Mechanism */}
-                            <rect
-                              x={col.x + 1}
-                              y={zY + 1}
-                              width={wScale - 2}
-                              height={zH - 2}
-                              fill="transparent"
-                              stroke={strokeColor}
-                              strokeWidth={0.5}
-                              strokeDasharray="3 3"
-                              opacity={0.3}
-                            />
-                            <rect
-                              x={innerX}
-                              y={innerY}
-                              width={innerW}
-                              height={innerH}
-                              fill="rgba(80,70,60,0.05)"
-                            />
-                            <rect
-                              x={outerX}
-                              y={boxY}
-                              width={boxMat}
-                              height={boxH}
-                              fill={fillFront}
-                              stroke={strokeColor}
-                              strokeWidth={0.5}
-                            />
-                            <rect
-                              x={outerX + outerW - boxMat}
-                              y={boxY}
-                              width={boxMat}
-                              height={boxH}
-                              fill={fillFront}
-                              stroke={strokeColor}
-                              strokeWidth={0.5}
-                            />
-                            <rect
-                              x={outerX}
-                              y={boxY + boxH - boxMat}
-                              width={outerW}
-                              height={boxMat}
-                              fill={fillFront}
-                              stroke={strokeColor}
-                              strokeWidth={0.5}
-                            />
-                            <rect
-                              x={innerX}
-                              y={innerY}
-                              width={innerW}
-                              height={boxMat * 0.6}
-                              fill={fillFront}
-                              stroke={strokeColor}
-                              strokeWidth={0.4}
-                              opacity={0.6}
-                            />
-                            <line
-                              x1={col.x + wScale * 0.35}
-                              y1={zY + zH / 2}
-                              x2={col.x + wScale * 0.65}
-                              y2={zY + zH / 2}
-                              stroke={strokeColor}
-                              strokeWidth={1}
-                              strokeLinecap="round"
-                              opacity={0.5}
-                            />
+                            return (
+                              <g pointerEvents="none">
+                                {/* Inner Drawer Mechanism */}
+                                <rect
+                                  x={col.x + 1}
+                                  y={zY + 1}
+                                  width={wScale - 2}
+                                  height={zH - 2}
+                                  fill="transparent"
+                                  stroke={strokeColor}
+                                  strokeWidth={0.5}
+                                  strokeDasharray="3 3"
+                                  opacity={0.3}
+                                />
+                                <rect
+                                  x={innerX}
+                                  y={innerY}
+                                  width={innerW}
+                                  height={innerH}
+                                  fill="rgba(80,70,60,0.05)"
+                                />
+                                <rect
+                                  x={outerX}
+                                  y={boxY}
+                                  width={boxMat}
+                                  height={boxH}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={0.5}
+                                />
+                                <rect
+                                  x={outerX + outerW - boxMat}
+                                  y={boxY}
+                                  width={boxMat}
+                                  height={boxH}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={0.5}
+                                />
+                                <rect
+                                  x={outerX}
+                                  y={boxY + boxH - boxMat}
+                                  width={outerW}
+                                  height={boxMat}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={0.5}
+                                />
+                                <rect
+                                  x={innerX}
+                                  y={innerY}
+                                  width={innerW}
+                                  height={boxMat * 0.6}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={0.4}
+                                  opacity={0.6}
+                                />
+                                <line
+                                  x1={col.x + wScale * 0.35}
+                                  y1={zY + zH / 2}
+                                  x2={col.x + wScale * 0.65}
+                                  y2={zY + zH / 2}
+                                  stroke={strokeColor}
+                                  strokeWidth={1}
+                                  strokeLinecap="round"
+                                  opacity={0.5}
+                                />
 
-                            {/* Solid Facade with slight transparency */}
-                            <rect
-                              x={col.x + gap}
-                              y={zY + gap}
-                              width={wScale - 2 * gap}
-                              height={zH - 2 * gap}
-                              fill={fillFront}
-                              opacity={0.8}
-                            />
-                            <rect
-                              x={col.x + gap}
-                              y={zY + gap}
-                              width={wScale - 2 * gap}
-                              height={zH - 2 * gap}
-                              fill="url(#facadeSheen)"
-                              stroke={strokeColor}
-                              strokeWidth={0.8}
-                            />
+                                {/* Solid Facade with slight transparency */}
+                                <rect
+                                  x={col.x + gap}
+                                  y={zY + gap}
+                                  width={wScale - 2 * gap}
+                                  height={zH - 2 * gap}
+                                  fill={fillFront}
+                                  opacity={0.8}
+                                />
+                                <rect
+                                  x={col.x + gap}
+                                  y={zY + gap}
+                                  width={wScale - 2 * gap}
+                                  height={zH - 2 * gap}
+                                  fill="url(#facadeSheen)"
+                                  stroke={strokeColor}
+                                  strokeWidth={0.8}
+                                />
 
-                            {/* Drawer Handle */}
-                            <line
-                              x1={col.x + wScale / 2 - handleW / 2}
-                              y1={handleY}
-                              x2={col.x + wScale / 2 + handleW / 2}
-                              y2={handleY}
-                              stroke={strokeColor}
-                              strokeWidth={2.5}
-                              strokeLinecap="round"
-                              opacity={0.9}
-                            />
-                            <line
-                              x1={col.x + wScale / 2 - handleW / 2}
-                              y1={handleY - 0.5}
-                              x2={col.x + wScale / 2 + handleW / 2}
-                              y2={handleY - 0.5}
-                              stroke="rgba(255,255,255,0.3)"
-                              strokeWidth={1}
-                              strokeLinecap="round"
-                            />
-                          </g>
-                        );
-                      })()}
-                    {zone.fill === "rod" &&
-                      (() => {
-                        const rodY = zY + 60 * scale;
-                        const rodX1 = col.x + 4 * scale;
-                        const rodX2 = col.x + wScale - 4 * scale;
-                        return (
-                          <g pointerEvents="none">
-                            {/* Flanges */}
-                            <ellipse
-                              cx={rodX1}
-                              cy={rodY}
-                              rx={4 * scale}
-                              ry={12 * scale}
-                              fill={strokeColor}
-                              opacity={0.6}
-                            />
-                            <ellipse
-                              cx={rodX2}
-                              cy={rodY}
-                              rx={4 * scale}
-                              ry={12 * scale}
-                              fill={strokeColor}
-                              opacity={0.6}
-                            />
+                                {/* Drawer Handle */}
+                                <line
+                                  x1={col.x + wScale / 2 - handleW / 2}
+                                  y1={handleY}
+                                  x2={col.x + wScale / 2 + handleW / 2}
+                                  y2={handleY}
+                                  stroke={strokeColor}
+                                  strokeWidth={2.5}
+                                  strokeLinecap="round"
+                                  opacity={0.9}
+                                />
+                                <line
+                                  x1={col.x + wScale / 2 - handleW / 2}
+                                  y1={handleY - 0.5}
+                                  x2={col.x + wScale / 2 + handleW / 2}
+                                  y2={handleY - 0.5}
+                                  stroke="rgba(255,255,255,0.3)"
+                                  strokeWidth={1}
+                                  strokeLinecap="round"
+                                />
+                              </g>
+                            );
+                          })()}
+                        {zone.fill === "rod" &&
+                          (() => {
+                            const rodY = zY + 60 * scale;
+                            const rodX1 = col.x + 4 * scale;
+                            const rodX2 = col.x + wScale - 4 * scale;
+                            return (
+                              <g pointerEvents="none">
+                                {/* Flanges */}
+                                <ellipse
+                                  cx={rodX1}
+                                  cy={rodY}
+                                  rx={4 * scale}
+                                  ry={12 * scale}
+                                  fill={strokeColor}
+                                  opacity={0.6}
+                                />
+                                <ellipse
+                                  cx={rodX2}
+                                  cy={rodY}
+                                  rx={4 * scale}
+                                  ry={12 * scale}
+                                  fill={strokeColor}
+                                  opacity={0.6}
+                                />
 
-                            {/* Main Rod */}
-                            <line
-                              x1={rodX1}
-                              y1={rodY}
-                              x2={rodX2}
-                              y2={rodY}
-                              stroke={strokeColor}
-                              strokeWidth={5}
-                              strokeLinecap="round"
-                              opacity={0.8}
-                            />
+                                {/* Main Rod */}
+                                <line
+                                  x1={rodX1}
+                                  y1={rodY}
+                                  x2={rodX2}
+                                  y2={rodY}
+                                  stroke={strokeColor}
+                                  strokeWidth={5}
+                                  strokeLinecap="round"
+                                  opacity={0.8}
+                                />
 
-                            {/* Gloss highlight texturing */}
-                            <line
-                              x1={rodX1}
-                              y1={rodY - 0.8}
-                              x2={rodX2}
-                              y2={rodY - 0.8}
-                              stroke="rgba(255,255,255,0.6)"
-                              strokeWidth={1.5}
-                              strokeLinecap="round"
-                            />
-                            <line
-                              x1={rodX1}
-                              y1={rodY + 1}
-                              x2={rodX2}
-                              y2={rodY + 1}
-                              stroke="rgba(0,0,0,0.2)"
-                              strokeWidth={1.5}
-                              strokeLinecap="round"
-                            />
-                          </g>
-                        );
-                      })()}
-                  </g>
-                )}
+                                {/* Gloss highlight texturing */}
+                                <line
+                                  x1={rodX1}
+                                  y1={rodY - 0.8}
+                                  x2={rodX2}
+                                  y2={rodY - 0.8}
+                                  stroke="rgba(255,255,255,0.6)"
+                                  strokeWidth={1.5}
+                                  strokeLinecap="round"
+                                />
+                                <line
+                                  x1={rodX1}
+                                  y1={rodY + 1}
+                                  x2={rodX2}
+                                  y2={rodY + 1}
+                                  stroke="rgba(0,0,0,0.2)"
+                                  strokeWidth={1.5}
+                                  strokeLinecap="round"
+                                />
+                              </g>
+                            );
+                          })()}
+                      </g>
+                    )}
                     {zi < col.zones.length - 1 &&
                       (() => {
                         const isDragging =
@@ -965,7 +1097,11 @@ export function CabinetSVG({
                           dragDivider.zoneIdx === zi;
                         return (
                           <g>
-                            <path d={`M${col.x},${zY + zH} L${col.x + depthOffset},${zY + zH - depthOffset} L${col.x + wScale + depthOffset},${zY + zH - depthOffset} L${col.x + wScale},${zY + zH} Z`} fill="url(#gradTop)" opacity={0.6} />
+                            <path
+                              d={`M${col.x},${zY + zH} L${col.x + depthOffset},${zY + zH - depthOffset} L${col.x + wScale + depthOffset},${zY + zH - depthOffset} L${col.x + wScale},${zY + zH} Z`}
+                              fill="url(#gradTop)"
+                              opacity={0.6}
+                            />
                             <rect
                               x={col.x}
                               y={zY + zH}
@@ -1004,188 +1140,190 @@ export function CabinetSVG({
                 );
               })}
 
-              {col.doors && col.doors.map((door) => {
-                let startY = oy + topT;
-                for (let i = 0; i < door.startZoneIdx; i++) {
-                   if (col.zones[i]) startY += col.zones[i].height * scale + boardT;
-                }
-                let zH = 0;
-                for (let i = door.startZoneIdx; i <= door.endZoneIdx; i++) {
-                   if (col.zones[i]) zH += col.zones[i].height * scale;
-                }
-                zH += (door.endZoneIdx - door.startZoneIdx) * boardT;
-                const zY = startY;
-                const wScale = col.width * scale;
+              {col.doors &&
+                col.doors.map((door) => {
+                  let startY = oy + topT;
+                  for (let i = 0; i < door.startZoneIdx; i++) {
+                    if (col.zones[i]) startY += col.zones[i].height * scale + boardT;
+                  }
+                  let zH = 0;
+                  for (let i = door.startZoneIdx; i <= door.endZoneIdx; i++) {
+                    if (col.zones[i]) zH += col.zones[i].height * scale;
+                  }
+                  zH += (door.endZoneIdx - door.startZoneIdx) * boardT;
+                  const zY = startY;
+                  const wScale = col.width * scale;
 
-                return (
-                  <g key={door.id} pointerEvents="none">
-                    {!door.isOpen && (
-                      <g>
-                        {/* Solid Door Facade with slight transparency */}
-                        <rect
-                          x={col.x + 1}
-                          y={zY + 1}
-                          width={wScale - 2}
-                          height={zH - 2}
-                          fill={fillFront}
-                          opacity={0.8}
-                        />
-                        <rect
-                          x={col.x + 1}
-                          y={zY + 1}
-                          width={wScale - 2}
-                          height={zH - 2}
-                          fill="url(#facadeSheen)"
-                          stroke={strokeColor}
-                          strokeWidth={0.8}
-                        />
-
-                        {/* Door split line for double doors */}
-                        {door.type === "double" && (
-                          <line
-                            x1={col.x + wScale / 2}
-                            y1={zY + 1}
-                            x2={col.x + wScale / 2}
-                            y2={zY + zH - 1}
+                  return (
+                    <g key={door.id} pointerEvents="none">
+                      {!door.isOpen && (
+                        <g>
+                          {/* Solid Door Facade with slight transparency */}
+                          <rect
+                            x={col.x + 1}
+                            y={zY + 1}
+                            width={wScale - 2}
+                            height={zH - 2}
+                            fill={fillFront}
+                            opacity={0.8}
+                          />
+                          <rect
+                            x={col.x + 1}
+                            y={zY + 1}
+                            width={wScale - 2}
+                            height={zH - 2}
+                            fill="url(#facadeSheen)"
                             stroke={strokeColor}
                             strokeWidth={0.8}
-                            opacity={0.5}
                           />
-                        )}
 
-                        {/* Smooth handles */}
-                        {door.type === "left" && (
-                          <g>
+                          {/* Door split line for double doors */}
+                          {door.type === "double" && (
                             <line
-                              x1={col.x + wScale - 15 * scale}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + wScale - 15 * scale}
-                              y2={zY + zH / 2 + 20 * scale}
+                              x1={col.x + wScale / 2}
+                              y1={zY + 1}
+                              x2={col.x + wScale / 2}
+                              y2={zY + zH - 1}
                               stroke={strokeColor}
-                              strokeWidth={3}
-                              strokeLinecap="round"
-                              opacity={0.9}
-                            />
-                            <line
-                              x1={col.x + wScale - 15 * scale - 0.5}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + wScale - 15 * scale - 0.5}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke="rgba(255,255,255,0.3)"
-                              strokeWidth={1}
-                              strokeLinecap="round"
-                            />
-                          </g>
-                        )}
-                        {door.type === "right" && (
-                          <g>
-                            <line
-                              x1={col.x + 15 * scale}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + 15 * scale}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke={strokeColor}
-                              strokeWidth={3}
-                              strokeLinecap="round"
-                              opacity={0.9}
-                            />
-                            <line
-                              x1={col.x + 15 * scale - 0.5}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + 15 * scale - 0.5}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke="rgba(255,255,255,0.3)"
-                              strokeWidth={1}
-                              strokeLinecap="round"
-                            />
-                          </g>
-                        )}
-                        {door.type === "double" && (
-                          <g>
-                            <line
-                              x1={col.x + wScale / 2 - 8 * scale}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + wScale / 2 - 8 * scale}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke={strokeColor}
-                              strokeWidth={3}
-                              strokeLinecap="round"
-                              opacity={0.9}
-                            />
-                            <line
-                              x1={col.x + wScale / 2 - 8 * scale - 0.5}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + wScale / 2 - 8 * scale - 0.5}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke="rgba(255,255,255,0.3)"
-                              strokeWidth={1}
-                              strokeLinecap="round"
-                            />
-                            <line
-                              x1={col.x + wScale / 2 + 8 * scale}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + wScale / 2 + 8 * scale}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke={strokeColor}
-                              strokeWidth={3}
-                              strokeLinecap="round"
-                              opacity={0.9}
-                            />
-                            <line
-                              x1={col.x + wScale / 2 + 8 * scale - 0.5}
-                              y1={zY + zH / 2 - 20 * scale}
-                              x2={col.x + wScale / 2 + 8 * scale - 0.5}
-                              y2={zY + zH / 2 + 20 * scale}
-                              stroke="rgba(255,255,255,0.3)"
-                              strokeWidth={1}
-                              strokeLinecap="round"
-                            />
-                          </g>
-                        )}
-                      </g>
-                    )}
-
-                    {door.isOpen && (() => {
-                      const dw = door.type === "double" ? wScale / 2 : wScale;
-                      const dx = dw * 0.8;
-                      const dy = dw * 0.25;
-                      return (
-                        <g opacity={0.65}>
-                          {/* Draw wireframe opening to indicate it's open, plus transparent polygons */}
-                          {(door.type === "left" || door.type === "double") && (
-                            <path
-                              d={`M${col.x},${zY} L${col.x - dx},${zY + dy} L${col.x - dx},${zY + zH + dy} L${col.x},${zY + zH} Z`}
-                              fill={fillFront}
-                              stroke={strokeColor}
-                              strokeWidth={1}
+                              strokeWidth={0.8}
+                              opacity={0.5}
                             />
                           )}
-                          {(door.type === "right" || door.type === "double") && (
-                            <path
-                              d={`M${col.x + wScale},${zY} L${col.x + wScale + dx},${zY + dy} L${col.x + wScale + dx},${zY + zH + dy} L${col.x + wScale},${zY + zH} Z`}
-                              fill={fillFront}
-                              stroke={strokeColor}
-                              strokeWidth={1}
-                            />
+
+                          {/* Smooth handles */}
+                          {door.type === "left" && (
+                            <g>
+                              <line
+                                x1={col.x + wScale - 15 * scale}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + wScale - 15 * scale}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke={strokeColor}
+                                strokeWidth={3}
+                                strokeLinecap="round"
+                                opacity={0.9}
+                              />
+                              <line
+                                x1={col.x + wScale - 15 * scale - 0.5}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + wScale - 15 * scale - 0.5}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke="rgba(255,255,255,0.3)"
+                                strokeWidth={1}
+                                strokeLinecap="round"
+                              />
+                            </g>
                           )}
-                          {/* Light dashed outline in original position to show where door closes */}
-                          <rect
-                             x={col.x}
-                             y={zY}
-                             width={wScale}
-                             height={zH}
-                             fill="transparent"
-                             stroke={strokeColor}
-                             strokeDasharray="4 4"
-                             strokeWidth={1}
-                             opacity={0.4}
-                          />
+                          {door.type === "right" && (
+                            <g>
+                              <line
+                                x1={col.x + 15 * scale}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + 15 * scale}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke={strokeColor}
+                                strokeWidth={3}
+                                strokeLinecap="round"
+                                opacity={0.9}
+                              />
+                              <line
+                                x1={col.x + 15 * scale - 0.5}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + 15 * scale - 0.5}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke="rgba(255,255,255,0.3)"
+                                strokeWidth={1}
+                                strokeLinecap="round"
+                              />
+                            </g>
+                          )}
+                          {door.type === "double" && (
+                            <g>
+                              <line
+                                x1={col.x + wScale / 2 - 8 * scale}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + wScale / 2 - 8 * scale}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke={strokeColor}
+                                strokeWidth={3}
+                                strokeLinecap="round"
+                                opacity={0.9}
+                              />
+                              <line
+                                x1={col.x + wScale / 2 - 8 * scale - 0.5}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + wScale / 2 - 8 * scale - 0.5}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke="rgba(255,255,255,0.3)"
+                                strokeWidth={1}
+                                strokeLinecap="round"
+                              />
+                              <line
+                                x1={col.x + wScale / 2 + 8 * scale}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + wScale / 2 + 8 * scale}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke={strokeColor}
+                                strokeWidth={3}
+                                strokeLinecap="round"
+                                opacity={0.9}
+                              />
+                              <line
+                                x1={col.x + wScale / 2 + 8 * scale - 0.5}
+                                y1={zY + zH / 2 - 20 * scale}
+                                x2={col.x + wScale / 2 + 8 * scale - 0.5}
+                                y2={zY + zH / 2 + 20 * scale}
+                                stroke="rgba(255,255,255,0.3)"
+                                strokeWidth={1}
+                                strokeLinecap="round"
+                              />
+                            </g>
+                          )}
                         </g>
-                      );
-                    })()}
-                  </g>
-                );
-              })}
+                      )}
+
+                      {door.isOpen &&
+                        (() => {
+                          const dw = door.type === "double" ? wScale / 2 : wScale;
+                          const dx = dw * 0.8;
+                          const dy = dw * 0.25;
+                          return (
+                            <g opacity={0.65}>
+                              {/* Draw wireframe opening to indicate it's open, plus transparent polygons */}
+                              {(door.type === "left" || door.type === "double") && (
+                                <path
+                                  d={`M${col.x},${zY} L${col.x - dx},${zY + dy} L${col.x - dx},${zY + zH + dy} L${col.x},${zY + zH} Z`}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={1}
+                                />
+                              )}
+                              {(door.type === "right" || door.type === "double") && (
+                                <path
+                                  d={`M${col.x + wScale},${zY} L${col.x + wScale + dx},${zY + dy} L${col.x + wScale + dx},${zY + zH + dy} L${col.x + wScale},${zY + zH} Z`}
+                                  fill={fillFront}
+                                  stroke={strokeColor}
+                                  strokeWidth={1}
+                                />
+                              )}
+                              {/* Light dashed outline in original position to show where door closes */}
+                              <rect
+                                x={col.x}
+                                y={zY}
+                                width={wScale}
+                                height={zH}
+                                fill="transparent"
+                                stroke={strokeColor}
+                                strokeDasharray="4 4"
+                                strokeWidth={1}
+                                opacity={0.4}
+                              />
+                            </g>
+                          );
+                        })()}
+                    </g>
+                  );
+                })}
             </g>
           );
         })}
@@ -1328,4 +1466,4 @@ export function CabinetSVG({
       )}
     </div>
   );
-}
+});

@@ -85,14 +85,21 @@ export function ConfigSidebar({
 }: Props) {
   const gT = config.globalThickness;
   const col = selected ? config.columns.find((c) => c.id === selected.colId) : null;
-  const selectedZoneIdx = col && selected ? col.zones.findIndex(z => z.id === selected.zoneId) : -1;
+  const selectedZoneIdx =
+    col && selected ? col.zones.findIndex((z) => z.id === selected.zoneId) : -1;
   const selectedZone = col && selectedZoneIdx !== -1 ? col.zones[selectedZoneIdx] : null;
-  const selectedSection = selectedZone && selected?.sectionIdx !== undefined ? selectedZone.sections?.[selected.sectionIdx] : undefined;
+  const selectedSection =
+    selectedZone && selected?.sectionIdx !== undefined
+      ? selectedZone.sections?.[selected.sectionIdx]
+      : undefined;
   const selectedCellFill = selectedSection?.fill ?? selectedZone?.fill ?? null;
   const selectedDrawerExtension = selectedSection?.drawerExtension ?? selectedZone?.drawerExtension;
-  const selectedShelfPosition = selectedSection?.shelfPosition ?? selectedZone?.shelfPosition ?? 0.5;
-  const activeDoor = col?.doors?.find(d => selectedZoneIdx >= d.startZoneIdx && selectedZoneIdx <= d.endZoneIdx) || null;
-  const selectedDoor = activeDoor || selectedZone?.door || null; // fallback to old zone.door
+  const selectedShelfPosition =
+    selectedSection?.shelfPosition ?? selectedZone?.shelfPosition ?? 0.5;
+  const activeDoor =
+    col?.doors?.find((d) => selectedZoneIdx >= d.startZoneIdx && selectedZoneIdx <= d.endZoneIdx) ||
+    null;
+  const selectedDoor = activeDoor;
   const isMulti = multiSelected.length > 1;
   const hasNarrowSection = config.columns.some((c) => c.width < MIN_SECTION_WIDTH);
   const price = useMemo(() => calculatePrice(config), [config]);
@@ -254,27 +261,27 @@ export function ConfigSidebar({
               if (v > currentCols.length) {
                 const templateZones = currentCols[0]?.zones || [];
                 for (let i = currentCols.length; i < v; i++) {
-                   newCols.push({
-                     id: `col-${Math.random().toString(36).slice(2)}`,
-                     width: 100,
-                     isLocked: false,
-                     zones: templateZones.map(z => ({
-                        id: `zone-${Math.random().toString(36).substr(2, 9)}`,
-                        height: z.height,
-                        fill: 'open' as const
-                     }))
-                   });
+                  newCols.push({
+                    id: `col-${Math.random().toString(36).slice(2)}`,
+                    width: 100,
+                    isLocked: false,
+                    zones: templateZones.map((z) => ({
+                      id: `zone-${Math.random().toString(36).substr(2, 9)}`,
+                      height: z.height,
+                      fill: "open" as const,
+                    })),
+                  });
                 }
               } else if (v < currentCols.length) {
                 newCols = currentCols.slice(0, v);
               }
               const innerW = getInnerWidth(config);
               const colW = (innerW - (v - 1) * gT) / v;
-              newCols = newCols.map(c => ({...c, width: colW, isLocked: false}));
+              newCols = newCols.map((c) => ({ ...c, width: colW, isLocked: false }));
               onChange({ ...config, columns: newCols });
               onClearSelection();
             }}
-            warning={(!selected && hasNarrowSection) ? `Мин. ${MIN_SECTION_WIDTH}мм` : undefined}
+            warning={!selected && hasNarrowSection ? `Мин. ${MIN_SECTION_WIDTH}мм` : undefined}
           />
           <Counter
             label="По высоте"
@@ -317,138 +324,139 @@ export function ConfigSidebar({
             </button>
           ))}
         </div>
-      <Section eyebrow="Толщина ЛДСП">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between bg-[#F3F1EC] rounded-xl px-4 py-2 cursor-default">
-            <span className="text-sm text-ink-soft font-medium">Толщина ЛДСП</span>
-            <div className="flex items-baseline gap-1">
-              <span className="num-display text-sm font-bold text-ink">{gT}</span>
-              <span className="text-[10px] uppercase font-mono text-ink-soft">мм</span>
+        <Section eyebrow="Толщина ЛДСП">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between bg-[#F3F1EC] rounded-xl px-4 py-2 cursor-default">
+              <span className="text-sm text-ink-soft font-medium">Толщина ЛДСП</span>
+              <div className="flex items-baseline gap-1">
+                <span className="num-display text-sm font-bold text-ink">{gT}</span>
+                <span className="text-[10px] uppercase font-mono text-ink-soft">мм</span>
+              </div>
             </div>
+            <Segmented<number>
+              options={[
+                { value: 16, label: "16" },
+                { value: 18, label: "18" },
+                { value: 22, label: "22" },
+                { value: 25, label: "25" },
+              ]}
+              value={gT}
+              onChange={(v) => update({ globalThickness: v })}
+            />
           </div>
-          <Segmented<number>
+        </Section>
+        <Section eyebrow="Тип сборки">
+          <Segmented<AssemblyType>
             options={[
-              { value: 16, label: "16" },
-              { value: 18, label: "18" },
-              { value: 22, label: "22" },
-              { value: 25, label: "25" },
+              { value: "top-bottom-overlap", label: "Горизонты накладные" },
+              { value: "sides-overlap", label: "Боковины накладные" },
             ]}
-            value={gT}
-            onChange={(v) => update({ globalThickness: v })}
+            value={config.assemblyType}
+            onChange={(v) => update({ assemblyType: v })}
           />
-        </div>
-      </Section>
-      <Section eyebrow="Тип сборки">
-        <Segmented<AssemblyType>
-          options={[
-            { value: "top-bottom-overlap", label: "Горизонты накладные" },
-            { value: "sides-overlap", label: "Боковины накладные" },
-          ]}
-          value={config.assemblyType}
-          onChange={(v) => update({ assemblyType: v })}
-        />
-      </Section>
+        </Section>
       </CollapsibleGroup>
 
       {/* ═══ КОРПУС ═══ */}
       <CollapsibleGroup title="Корпус">
-      <Section eyebrow="Внешние панели">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-          <Toggle
-            label="Крыша"
-            active={config.outerPanels.top.isVisible}
-            onChange={(v) =>
-              update({
-                outerPanels: {
-                  ...config.outerPanels,
-                  top: { ...config.outerPanels.top, isVisible: v },
-                },
-              })
-            }
-          />
-          <Toggle
-            label="Боковина Л"
-            active={config.outerPanels.left.isVisible}
-            onChange={(v) =>
-              update({
-                outerPanels: {
-                  ...config.outerPanels,
-                  left: { ...config.outerPanels.left, isVisible: v },
-                },
-              })
-            }
-          />
-          <Toggle
-            label="Дно"
-            active={config.outerPanels.bottom.isVisible}
-            onChange={(v) =>
-              update({
-                outerPanels: {
-                  ...config.outerPanels,
-                  bottom: { ...config.outerPanels.bottom, isVisible: v },
-                },
-              })
-            }
-          />
-          <Toggle
-            label="Боковина П"
-            active={config.outerPanels.right.isVisible}
-            onChange={(v) =>
-              update({
-                outerPanels: {
-                  ...config.outerPanels,
-                  right: { ...config.outerPanels.right, isVisible: v },
-                },
-              })
-            }
-          />
-        </div>
-      </Section>
-      <Section eyebrow="Опора / Цоколь">
-        <div className="space-y-3">
-          <Segmented<import("./types").BaseType>
+        <Section eyebrow="Внешние панели">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            <Toggle
+              label="Крыша"
+              active={config.outerPanels.top.isVisible}
+              onChange={(v) =>
+                update({
+                  outerPanels: {
+                    ...config.outerPanels,
+                    top: { ...config.outerPanels.top, isVisible: v },
+                  },
+                })
+              }
+            />
+            <Toggle
+              label="Боковина Л"
+              active={config.outerPanels.left.isVisible}
+              onChange={(v) =>
+                update({
+                  outerPanels: {
+                    ...config.outerPanels,
+                    left: { ...config.outerPanels.left, isVisible: v },
+                  },
+                })
+              }
+            />
+            <Toggle
+              label="Дно"
+              active={config.outerPanels.bottom.isVisible}
+              onChange={(v) =>
+                update({
+                  outerPanels: {
+                    ...config.outerPanels,
+                    bottom: { ...config.outerPanels.bottom, isVisible: v },
+                  },
+                })
+              }
+            />
+            <Toggle
+              label="Боковина П"
+              active={config.outerPanels.right.isVisible}
+              onChange={(v) =>
+                update({
+                  outerPanels: {
+                    ...config.outerPanels,
+                    right: { ...config.outerPanels.right, isVisible: v },
+                  },
+                })
+              }
+            />
+          </div>
+        </Section>
+        <Section eyebrow="Опора / Цоколь">
+          <div className="space-y-3">
+            <Segmented<import("./types").BaseType>
+              options={[
+                { value: "none", label: "Нет" },
+                { value: "plinth", label: "Цоколь" },
+                { value: "legs-round", label: "Круглые" },
+                { value: "legs-square", label: "Квадр." },
+              ]}
+              value={config.base?.type ?? "none"}
+              onChange={(v) => update({ base: { ...config.base, type: v } })}
+            />
+            {config.base?.type !== "none" && (
+              <DimSlider
+                label="Высота опоры"
+                value={config.base?.height ?? 100}
+                min={50}
+                max={200}
+                step={10}
+                unit="мм"
+                onChange={(v) => update({ base: { ...config.base, height: v } })}
+              />
+            )}
+            {(config.base?.type === "legs-round" || config.base?.type === "legs-square") && (
+              <Counter
+                label="Ножек по ширине (спереди и сзади)"
+                value={config.base.legsCountX ?? Math.ceil(config.width / 600) + 1}
+                min={2}
+                max={10}
+                onChange={(v) => update({ base: { ...config.base, legsCountX: v } })}
+              />
+            )}
+          </div>
+        </Section>
+        <Section eyebrow="Задняя стенка">
+          <Segmented<BackPanelType>
             options={[
               { value: "none", label: "Нет" },
-              { value: "plinth", label: "Цоколь" },
-              { value: "legs-round", label: "Круглые" },
-              { value: "legs-square", label: "Квадр." },
+              { value: "hdf-overlap", label: "ХДФ накл." },
+              { value: "hdf-groove", label: "ХДФ паз" },
+              { value: "ldsp-inner", label: "ЛДСП" },
             ]}
-            value={config.base?.type ?? "none"}
-            onChange={(v) => update({ base: { ...config.base, type: v } })}
+            value={config.backPanel.type}
+            onChange={(v) => update({ backPanel: { ...config.backPanel, type: v } })}
           />
-          {config.base?.type !== "none" && (
-            <DimSlider
-              label="Высота опоры"
-              value={config.base?.height ?? 100}
-              min={50}
-              max={200}
-              step={10}
-              unit="мм"
-              onChange={(v) => update({ base: { ...config.base, height: v } })}
-            />
-          )}
-          {(config.base?.type === "legs-round" || config.base?.type === "legs-square") && (
-            <Counter
-              label="Ножек по ширине (спереди и сзади)" 
-              value={config.base.legsCountX ?? (Math.ceil(config.width / 600) + 1)} 
-              min={2} max={10} 
-              onChange={(v) => update({ base: { ...config.base, legsCountX: v } })} 
-            />
-          )}
-        </div>
-      </Section>
-      <Section eyebrow="Задняя стенка">
-        <Segmented<BackPanelType>
-          options={[
-            { value: "none", label: "Нет" },
-            { value: "hdf-overlap", label: "ХДФ накл." },
-            { value: "hdf-groove", label: "ХДФ паз" },
-            { value: "ldsp-inner", label: "ЛДСП" },
-          ]}
-          value={config.backPanel.type}
-          onChange={(v) => update({ backPanel: { ...config.backPanel, type: v } })}
-        />
-      </Section>
+        </Section>
       </CollapsibleGroup>
 
       {/* ═══ SELECTED CELL ═══ */}
@@ -558,7 +566,9 @@ export function ConfigSidebar({
                     <p className="text-[10px] text-ink-mute font-mono uppercase tracking-wider">
                       Положение полки
                     </p>
-                    <span className="text-[10px] font-mono text-ink-mute">{Math.round(selectedShelfPosition * 100)}%</span>
+                    <span className="text-[10px] font-mono text-ink-mute">
+                      {Math.round(selectedShelfPosition * 100)}%
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -566,7 +576,13 @@ export function ConfigSidebar({
                     max="0.9"
                     step="0.01"
                     value={selectedZone?.shelfPosition ?? 0.5}
-                    onChange={(e) => onShelfPositionChange(selected!.colId, selected!.zoneId, parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      onShelfPositionChange(
+                        selected!.colId,
+                        selected!.zoneId,
+                        parseFloat(e.target.value),
+                      )
+                    }
                     className="w-full slider-accent"
                   />
                 </div>
@@ -694,9 +710,7 @@ function CollapsibleGroup({
           isOpen ? "collapsible-content--open" : "collapsible-content--closed"
         }`}
       >
-        <div className="px-4 pb-4 space-y-4">
-          {children}
-        </div>
+        <div className="px-4 pb-4 space-y-4">{children}</div>
       </div>
     </div>
   );

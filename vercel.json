@@ -1,7 +1,5 @@
 {
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist/client",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import type { CabinetConfig, SelectedCell } from "../components/configurator/types";
-import { createDefaultColumns } from "../components/configurator/types";
+import { createDefaultColumns, migrateConfig } from "../components/configurator/types";
 
-const INITIAL: CabinetConfig = {
+const INITIAL: CabinetConfig = migrateConfig({
   height: 1800,
   width: 1200,
   depth: 400,
@@ -24,7 +24,7 @@ const INITIAL: CabinetConfig = {
     type: "none",
     height: 100,
   },
-};
+});
 
 interface CabinetStore {
   config: CabinetConfig;
@@ -49,7 +49,7 @@ export const useCabinetStore = create<CabinetStore>((set, get) => ({
   setConfig: (updater) =>
     set((state) => {
       const nextConfig = typeof updater === "function" ? updater(state.config) : updater;
-      return { config: nextConfig };
+      return { config: migrateConfig(nextConfig) };
     }),
 
   setSelected: (updater) =>

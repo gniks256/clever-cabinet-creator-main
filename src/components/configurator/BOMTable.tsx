@@ -36,7 +36,7 @@ export function BOMTable({ config }: Props) {
 
       <div className="overflow-x-auto max-h-[500px] overflow-y-auto relative scrollbar-hide">
         <table className="w-full text-sm border-separate border-spacing-0">
-          <thead className="sticky top-0 z-20 bg-surface/90 backdrop-blur-md">
+          <thead className="sticky top-0 z-10 bg-surface/90 backdrop-blur-md">
             <tr className="text-[9px] uppercase tracking-[0.15em] text-ink-mute font-mono">
               <th className="text-left font-semibold px-6 py-3 border-b border-hairline">
                 Наименование
@@ -72,7 +72,7 @@ export function BOMTable({ config }: Props) {
             ).map(([group, items], gIdx) => (
               <React.Fragment key={group}>
                 {group !== "Основное" && (
-                  <tr className="sticky top-[37px] z-10">
+                  <tr className="sticky top-[37px] z-5">
                     <td
                       colSpan={6}
                       className="px-6 py-2 text-[9px] font-bold uppercase tracking-[0.2em] text-accent border-b border-hairline bg-surface/80 backdrop-blur-md"

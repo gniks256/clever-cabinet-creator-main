@@ -31,7 +31,7 @@ export interface Zone {
   fill: CellFill | "hidden";
   colSpan?: number; // 1 by default
   isLocked?: boolean;
-  drawerExtension?: DrawerExtensionType; 
+  drawerExtension?: DrawerExtensionType;
   shelfPosition?: number; // 0.1 to 0.9, default 0.5
   sectionsCount?: number; // 1 by default
   sections?: ZoneSection[];
@@ -323,7 +323,7 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
         quantity: 2,
       });
       // Plastic supports for plinth usually used
-      const frontLegs = config.base.legsCountX ?? (Math.ceil(config.width / 600) + 1);
+      const frontLegs = config.base.legsCountX ?? Math.ceil(config.width / 600) + 1;
       const totalLegs = frontLegs * 2;
       items.push({
         group: GROUP_HARDWARE,
@@ -335,7 +335,7 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
         quantity: totalLegs,
       });
     } else if (config.base.type === "legs-round" || config.base.type === "legs-square") {
-      const frontLegs = config.base.legsCountX ?? (Math.ceil(config.width / 600) + 1);
+      const frontLegs = config.base.legsCountX ?? Math.ceil(config.width / 600) + 1;
       const totalLegs = frontLegs * 2;
       const legName =
         config.base.type === "legs-round"
@@ -395,13 +395,15 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
         }
       }
 
-      const sectionsToProcess = (zone.sections && zone.sections.length > 1) 
-        ? zone.sections 
-        : [{ fill: zone.fill, drawerExtension: zone.drawerExtension }];
-      
-      const secW = (zone.sections && zone.sections.length > 1) 
-        ? (actualW - (zone.sections.length - 1) * gT) / zone.sections.length 
-        : actualW;
+      const sectionsToProcess =
+        zone.sections && zone.sections.length > 1
+          ? zone.sections
+          : [{ fill: zone.fill, drawerExtension: zone.drawerExtension }];
+
+      const secW =
+        zone.sections && zone.sections.length > 1
+          ? (actualW - (zone.sections.length - 1) * gT) / zone.sections.length
+          : actualW;
 
       sectionsToProcess.forEach((sec) => {
         if (sec.fill === "shelf") {
@@ -422,7 +424,7 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
           const ext = sec.drawerExtension || "ball-bearing";
 
           const boxT = gT;
-          const nominalDepth = Math.floor((config.depth - 20) / 50) * 50; 
+          const nominalDepth = Math.floor((config.depth - 20) / 50) * 50;
           const boxDepth = nominalDepth;
           const fascadeH = zone.height - 4;
           const boxH = Math.round(fascadeH - 40);
@@ -511,7 +513,7 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
                 : ext === "roller"
                   ? "Направляющие роликовые"
                   : "Направляющие шариковые";
-            
+
             items.push({
               group: GROUP_HARDWARE,
               name: hardwareName,
@@ -526,7 +528,7 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
       });
 
       if (zone.sections && zone.sections.length > 1) {
-         items.push({
+        items.push({
           group: GROUP_CABINET,
           name: "Перегородка вертикальная (внутренняя)",
           length: Math.round(zone.height),
@@ -592,55 +594,16 @@ export function generateBOM(config: CabinetConfig): BOMItem[] {
         }
       }
 
-      // Handle old zone.door for backwards compatibility, though we'll use col.doors mostly
-      if (zone.door) {
-        const isOverlay = zone.door.installation === "overlay";
-        const isDouble = zone.door.type === "double";
-
-        let dW = isOverlay ? actualW + gT : actualW - 4;
-        const dH = isOverlay ? zone.height + gT : zone.height - 4;
-
-        if (isDouble) dW = (dW - 2) / 2;
-
-        items.push({
-          group: GROUP_FACADES,
-          name: `Дверь (${zone.door.type}, ${zone.door.installation})`,
-          length: Math.round(dH),
-          width: Math.round(dW),
-          thickness: 18,
-          edgeBand: 2,
-          quantity: isDouble ? 2 : 1,
-        });
-
-        // Расчет количества петель: 2 петли на дверь до 1м, 3 на дверь до 1.5м, 4 выше
-        const hingesPerDoor = dH < 1000 ? 2 : dH < 1600 ? 3 : 4;
-        const totalHinges = hingesPerDoor * (isDouble ? 2 : 1);
-        const hingeName =
-          zone.door.hingeType === "soft-close"
-            ? "Петля с доводчиком"
-            : zone.door.hingeType === "push-to-open"
-              ? "Петля Push-to-open"
-              : "Петля стандартная";
-
-        items.push({
-          group: GROUP_HARDWARE,
-          name: hingeName,
-          length: 0,
-          width: 0,
-          thickness: 0,
-          edgeBand: 0,
-          quantity: totalHinges,
-        });
-      }
+      // Legacy zone.door removed to use col.doors exclusively
     });
 
     if (col.doors) {
       col.doors.forEach((door) => {
-        let actualW = col.width; // for simplicity assume single column width. If doors span columns we need complex logic, but doorGroup is per column.
+        const actualW = col.width; // for simplicity assume single column width. If doors span columns we need complex logic, but doorGroup is per column.
         let dH = 0;
         for (let i = door.startZoneIdx; i <= door.endZoneIdx; i++) {
-           const z = col.zones[i];
-           if (z) dH += z.height;
+          const z = col.zones[i];
+          if (z) dH += z.height;
         }
         dH += (door.endZoneIdx - door.startZoneIdx) * gT;
 
@@ -724,12 +687,16 @@ export function calculatePrice(config: CabinetConfig): number {
   config.columns.forEach((col) => {
     col.zones.forEach((zone) => {
       if (zone.fill === "drawer") hardwareCost += 18;
-      if (zone.door) hardwareCost += (zone.door.type === "double" ? 4 : 2) * 5;
     });
+    if (col.doors) {
+      col.doors.forEach((door) => {
+        hardwareCost += (door.type === "double" ? 4 : 2) * 5;
+      });
+    }
   });
 
   if (config.base && config.base.type !== "none") {
-    const frontLegs = config.base.legsCountX ?? (Math.ceil(config.width / 600) + 1);
+    const frontLegs = config.base.legsCountX ?? Math.ceil(config.width / 600) + 1;
     const totalLegs = frontLegs * 2;
     if (config.base.type === "plinth") hardwareCost += totalLegs * 1.5;
     if (config.base.type === "legs-round") hardwareCost += totalLegs * 3;
@@ -739,4 +706,47 @@ export function calculatePrice(config: CabinetConfig): number {
   const baseCost = totalArea * 15;
   const textureMult = config.texture === "walnut" ? 1.4 : config.texture === "oak" ? 1.2 : 1;
   return Math.round((baseCost * textureMult + hardwareCost) * 100) / 100;
+}
+
+export function migrateConfig(config: CabinetConfig): CabinetConfig {
+  let hasChanges = false;
+  const migratedColumns = config.columns.map((col) => {
+    const doors = [...(col.doors || [])];
+    let colZonesChanged = false;
+    const migratedZones = col.zones.map((zone, idx) => {
+      if (zone.door) {
+        hasChanges = true;
+        colZonesChanged = true;
+        doors.push({
+          id: `door-${Math.random().toString(36).substr(2, 9)}`,
+          startZoneIdx: idx,
+          endZoneIdx: idx,
+          type: zone.door.type,
+          installation: zone.door.installation,
+          hingeType: zone.door.hingeType || "standard",
+          isOpen: zone.door.isOpen || false,
+        });
+        const { door, ...rest } = zone;
+        return rest;
+      }
+      return zone;
+    });
+
+    if (colZonesChanged) {
+      return {
+        ...col,
+        zones: migratedZones,
+        doors,
+      };
+    }
+    return col;
+  });
+
+  if (hasChanges) {
+    return {
+      ...config,
+      columns: migratedColumns,
+    };
+  }
+  return config;
 }

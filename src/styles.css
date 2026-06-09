@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap");
 
 @import "tailwindcss" source(none);
 @source "../src";
@@ -119,24 +119,28 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
     letter-spacing: -0.011em;
   }
 
   .font-display {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: "Space Grotesk", system-ui, sans-serif;
     letter-spacing: -0.035em;
     font-weight: 500;
   }
 
   .font-serif-italic {
-    font-family: 'Instrument Serif', Georgia, serif;
+    font-family: "Instrument Serif", Georgia, serif;
     font-style: italic;
     letter-spacing: -0.005em;
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
     letter-spacing: -0.01em;
     font-feature-settings: "ss01", "ss02", "zero";
   }
@@ -173,7 +177,7 @@
   }
 
   .num-display {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: "Space Grotesk", system-ui, sans-serif;
     font-feature-settings: "tnum", "ss01";
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.025em;
@@ -220,14 +224,30 @@
 }
 
 @layer utilities {
-  .text-ink { color: hsl(var(--ink)); }
-  .text-ink-soft { color: hsl(var(--ink-soft)); }
-  .text-ink-mute { color: hsl(var(--ink-mute)); }
-  .bg-surface { background-color: hsl(var(--surface)); }
-  .bg-surface-elevated { background-color: hsl(var(--surface-elevated)); }
-  .bg-canvas { background-color: hsl(var(--canvas)); }
-  .border-hairline { border-color: hsl(var(--hairline)); }
-  .border-hairline-strong { border-color: hsl(var(--hairline-strong)); }
+  .text-ink {
+    color: hsl(var(--ink));
+  }
+  .text-ink-soft {
+    color: hsl(var(--ink-soft));
+  }
+  .text-ink-mute {
+    color: hsl(var(--ink-mute));
+  }
+  .bg-surface {
+    background-color: hsl(var(--surface));
+  }
+  .bg-surface-elevated {
+    background-color: hsl(var(--surface-elevated));
+  }
+  .bg-canvas {
+    background-color: hsl(var(--canvas));
+  }
+  .border-hairline {
+    border-color: hsl(var(--hairline));
+  }
+  .border-hairline-strong {
+    border-color: hsl(var(--hairline-strong));
+  }
   .text-gradient-accent {
     background: var(--gradient-accent);
     -webkit-background-clip: text;
@@ -332,21 +352,38 @@ input[type="range"].slider-mint::-webkit-slider-thumb:hover {
 
 /* ─── Animations ─── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-up { animation: fade-up 0.7s var(--ease-out) both; }
+.animate-fade-up {
+  animation: fade-up 0.7s var(--ease-out) both;
+}
 
 @keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.5); }
-  50% { box-shadow: 0 0 0 8px hsl(var(--accent) / 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--accent) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px hsl(var(--accent) / 0);
+  }
 }
-.pulse-ring { animation: pulse-ring 2.4s var(--ease-out) infinite; }
+.pulse-ring {
+  animation: pulse-ring 2.4s var(--ease-out) infinite;
+}
 
 /* ─── Collapsible Groups ─── */
 .collapsible-content {
   display: grid;
-  transition: grid-template-rows 0.35s var(--ease-out), opacity 0.25s ease;
+  transition:
+    grid-template-rows 0.35s var(--ease-out),
+    opacity 0.25s ease;
 }
 .collapsible-content--open {
   grid-template-rows: 1fr;

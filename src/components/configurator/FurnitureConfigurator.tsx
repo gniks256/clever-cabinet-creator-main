@@ -2,7 +2,14 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { CabinetSVG } from "./CabinetSVG";
 import { ConfigSidebar } from "./ConfigSidebar";
 import { BOMTable } from "./BOMTable";
-import type { CabinetConfig, CellFill, SelectedCell, DoorType, DoorInstallation, DrawerExtensionType } from "./types";
+import type {
+  CabinetConfig,
+  CellFill,
+  SelectedCell,
+  DoorType,
+  DoorInstallation,
+  DrawerExtensionType,
+} from "./types";
 import {
   createDefaultColumns,
   getInnerHeight,
@@ -14,8 +21,6 @@ import {
 } from "./types";
 import type { Zone } from "./types";
 import { useCabinetStore } from "../../store/cabinetStore";
-
-
 
 export function FurnitureConfigurator() {
   const config = useCabinetStore((state) => state.config);
@@ -188,7 +193,7 @@ export function FurnitureConfigurator() {
       }
       setConfig(finalConfig);
     },
-    [config],
+    [config, setConfig],
   );
 
   const toggleLockColumn = useCallback(
@@ -198,7 +203,7 @@ export function FurnitureConfigurator() {
       );
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, setConfig],
   );
 
   const toggleLockZone = useCallback(
@@ -212,7 +217,7 @@ export function FurnitureConfigurator() {
       });
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, setConfig],
   );
 
   const performMerge = useCallback(
@@ -238,6 +243,25 @@ export function FurnitureConfigurator() {
       const newCols = config.columns.map((col, cIdx) => {
         const bounds = boundsPerCol[cIdx];
         if (!bounds) return col;
+
+        const shiftAmount = bounds.max - bounds.min;
+        const newDoors = (col.doors || [])
+          .map((door) => {
+            const { startZoneIdx, endZoneIdx } = door;
+            if (endZoneIdx < bounds.min) {
+              return door;
+            }
+            if (startZoneIdx > bounds.max) {
+              return {
+                ...door,
+                startZoneIdx: startZoneIdx - shiftAmount,
+                endZoneIdx: endZoneIdx - shiftAmount,
+              };
+            }
+            return null;
+          })
+          .filter((door): door is NonNullable<typeof door> => door !== null);
+
         if (cIdx === minColIdx) {
           const zonesToMerge = col.zones.slice(bounds.min, bounds.max + 1);
           const totalHeight =
@@ -248,7 +272,7 @@ export function FurnitureConfigurator() {
             height: totalHeight,
             fill: targetFill,
             colSpan: maxColIdx - minColIdx + 1,
-            door: targetFill === "open" ? undefined : zonesToMerge[0].door,
+            door: undefined,
           };
           return {
             ...col,
@@ -257,6 +281,7 @@ export function FurnitureConfigurator() {
               mergedZone,
               ...col.zones.slice(bounds.max + 1),
             ],
+            doors: newDoors,
           };
         } else {
           const zonesToMerge = col.zones.slice(bounds.min, bounds.max + 1);
@@ -275,6 +300,7 @@ export function FurnitureConfigurator() {
               hiddenZone,
               ...col.zones.slice(bounds.max + 1),
             ],
+            doors: newDoors,
           };
         }
       });
@@ -290,7 +316,7 @@ export function FurnitureConfigurator() {
         setSelected([]);
       }
     },
-    [config, selected],
+    [config, selected, setConfig, setSelected],
   );
 
   const handleCellFillChange = useCallback(
@@ -300,12 +326,36 @@ export function FurnitureConfigurator() {
         performMerge(fill, true);
         return;
       }
-      const newCols = config.columns.map((col) => ({
-        ...col,
-        zones: col.zones.map((zone) => {
-          const selItem = selected.find((s) => s.colId === col.id && s.zoneId === zone.id);
-          if (selItem) {
-            if (selItem.sectionIdx !== undefined && zone.sections && zone.sections[selItem.sectionIdx]) {
+      const newCols = config.columns.map((col) => {
+        const selectedIndicesInCol = col.zones
+          .map((zone, idx) => {
+            const isSelected = selected.some((s) => s.colId === col.id && s.zoneId === zone.id);
+            return isSelected ? idx : -1;
+          })
+          .filter((idx) => idx !== -1);
+
+        if (selectedIndicesInCol.length === 0) return col;
+
+        let updatedDoors = col.doors || [];
+        if (fill === "drawer") {
+          updatedDoors = updatedDoors.filter((door) => {
+            const overlaps = selectedIndicesInCol.some(
+              (idx) => idx >= door.startZoneIdx && idx <= door.endZoneIdx,
+            );
+            return !overlaps;
+          });
+        }
+
+        const updatedZones = col.zones.map((zone, idx) => {
+          const isSelected = selectedIndicesInCol.includes(idx);
+          if (isSelected) {
+            const selItem = selected.find((s) => s.colId === col.id && s.zoneId === zone.id);
+            if (
+              selItem &&
+              selItem.sectionIdx !== undefined &&
+              zone.sections &&
+              zone.sections[selItem.sectionIdx]
+            ) {
               const newSections = [...zone.sections];
               newSections[selItem.sectionIdx] = { ...newSections[selItem.sectionIdx], fill };
               return { ...zone, sections: newSections };
@@ -317,11 +367,17 @@ export function FurnitureConfigurator() {
             return updatedZone;
           }
           return zone;
-        }),
-      }));
+        });
+
+        return {
+          ...col,
+          zones: updatedZones,
+          doors: updatedDoors,
+        };
+      });
       setConfig({ ...config, columns: newCols });
     },
-    [config, selected, performMerge],
+    [config, selected, performMerge, setConfig],
   );
 
   const handleDoorChange = useCallback(
@@ -334,8 +390,8 @@ export function FurnitureConfigurator() {
       const indices = selected
         .filter((s) => s.colId === colId)
         .map((s) => config.columns[colIdx].zones.findIndex((z) => z.id === s.zoneId))
-        .filter(i => i !== -1);
-        
+        .filter((i) => i !== -1);
+
       if (indices.length === 0) return;
       const minIdx = Math.min(...indices);
       const maxIdx = Math.max(...indices);
@@ -346,16 +402,10 @@ export function FurnitureConfigurator() {
 
       if (!type) {
         doors = doors.filter((d) => !(minIdx <= d.endZoneIdx && maxIdx >= d.startZoneIdx));
-        // Remove old zone.door as well
-        col.zones = col.zones.map((z, i) => {
-           if (i >= minIdx && i <= maxIdx && z.door) {
-              const { door, ...rest } = z;
-              return rest;
-           }
-           return z;
-        });
       } else {
-        const existingIdx = doors.findIndex((d) => minIdx <= d.endZoneIdx && maxIdx >= d.startZoneIdx);
+        const existingIdx = doors.findIndex(
+          (d) => minIdx <= d.endZoneIdx && maxIdx >= d.startZoneIdx,
+        );
         if (existingIdx !== -1) {
           doors[existingIdx] = { ...doors[existingIdx], type, installation };
         } else {
@@ -369,12 +419,19 @@ export function FurnitureConfigurator() {
             isOpen: false,
           });
         }
+        // Change fill to "open" for any drawer zones within the door's bounds
+        col.zones = col.zones.map((z, idx) => {
+          if (idx >= minIdx && idx <= maxIdx && z.fill === "drawer") {
+            return { ...z, fill: "open" };
+          }
+          return z;
+        });
       }
       col.doors = doors;
       newCols[colIdx] = col;
       setConfig({ ...config, columns: newCols });
     },
-    [config, selected],
+    [config, selected, setConfig],
   );
 
   const mergeSelectedCells = useCallback(() => {
@@ -393,7 +450,7 @@ export function FurnitureConfigurator() {
       columns: remainingCols.map((c) => ({ ...c, width: newWidth })),
     });
     setSelected([]);
-  }, [config, selected]);
+  }, [config, selected, setConfig, setSelected]);
 
   const splitZone = useCallback(
     (colId: string, zoneId: string) => {
@@ -437,7 +494,7 @@ export function FurnitureConfigurator() {
       setConfig({ ...config, columns: newCols });
       setSelected([]);
     },
-    [config],
+    [config, setConfig, setSelected],
   );
 
   const setRowSegments = useCallback(
@@ -452,12 +509,12 @@ export function FurnitureConfigurator() {
           if (i === 0) firstNewZoneId = id;
           return { id, height: zoneH, fill: "open" };
         });
-        return { ...col, zones: newZones };
+        return { ...col, zones: newZones, doors: [] };
       });
       setConfig({ ...config, columns: newCols });
       if (firstNewZoneId) setSelected([{ colId, zoneId: firstNewZoneId }]);
     },
-    [config],
+    [config, setConfig, setSelected],
   );
 
   const setAllRowSegments = useCallback(
@@ -471,11 +528,12 @@ export function FurnitureConfigurator() {
           height: zoneH,
           fill: "open" as const,
         })),
+        doors: [],
       }));
       setConfig({ ...config, columns: newCols });
       setSelected([]);
     },
-    [config],
+    [config, setConfig, setSelected],
   );
 
   const handleDrawerExtensionChange = useCallback(
@@ -483,10 +541,18 @@ export function FurnitureConfigurator() {
       const newCols = config.columns.map((col) => ({
         ...col,
         zones: col.zones.map((z) => {
-          const selItem = selected.find(s => s.colId === col.id && s.zoneId === z.id);
-          if (selItem && selItem.sectionIdx !== undefined && z.sections && z.sections[selItem.sectionIdx]) {
+          const selItem = selected.find((s) => s.colId === col.id && s.zoneId === z.id);
+          if (
+            selItem &&
+            selItem.sectionIdx !== undefined &&
+            z.sections &&
+            z.sections[selItem.sectionIdx]
+          ) {
             const newSections = [...z.sections];
-            newSections[selItem.sectionIdx] = { ...newSections[selItem.sectionIdx], drawerExtension: ext };
+            newSections[selItem.sectionIdx] = {
+              ...newSections[selItem.sectionIdx],
+              drawerExtension: ext,
+            };
             return { ...z, sections: newSections };
           }
           if (col.id === colId && z.id === zoneId) {
@@ -497,7 +563,7 @@ export function FurnitureConfigurator() {
       }));
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, selected, setConfig],
   );
 
   const setShelvesCount = useCallback(
@@ -511,7 +577,7 @@ export function FurnitureConfigurator() {
       });
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, setConfig],
   );
 
   const handleShelfPositionChange = useCallback(
@@ -519,10 +585,18 @@ export function FurnitureConfigurator() {
       const newCols = config.columns.map((col) => ({
         ...col,
         zones: col.zones.map((z) => {
-          const selItem = selected.find(s => s.colId === col.id && s.zoneId === z.id);
-          if (selItem && selItem.sectionIdx !== undefined && z.sections && z.sections[selItem.sectionIdx]) {
+          const selItem = selected.find((s) => s.colId === col.id && s.zoneId === z.id);
+          if (
+            selItem &&
+            selItem.sectionIdx !== undefined &&
+            z.sections &&
+            z.sections[selItem.sectionIdx]
+          ) {
             const newSections = [...z.sections];
-            newSections[selItem.sectionIdx] = { ...newSections[selItem.sectionIdx], shelfPosition: pos };
+            newSections[selItem.sectionIdx] = {
+              ...newSections[selItem.sectionIdx],
+              shelfPosition: pos,
+            };
             return { ...z, sections: newSections };
           }
           if (col.id === colId && z.id === zoneId) {
@@ -533,7 +607,7 @@ export function FurnitureConfigurator() {
       }));
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, selected, setConfig],
   );
 
   const handleSectionsCountChange = useCallback(
@@ -545,10 +619,12 @@ export function FurnitureConfigurator() {
             const currentSections = z.sections || [];
             const newSections = [];
             for (let i = 0; i < count; i++) {
-               newSections.push(currentSections[i] || {
-                 id: `sec-${Math.random().toString(36).substr(2, 9)}`,
-                 fill: 'open',
-               });
+              newSections.push(
+                currentSections[i] || {
+                  id: `sec-${Math.random().toString(36).substr(2, 9)}`,
+                  fill: "open",
+                },
+              );
             }
             return { ...z, sectionsCount: count, sections: newSections };
           }
@@ -557,7 +633,7 @@ export function FurnitureConfigurator() {
       }));
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, setConfig],
   );
 
   const handleHingeChange = useCallback(
@@ -573,7 +649,7 @@ export function FurnitureConfigurator() {
       });
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, setConfig],
   );
 
   const handleDoorToggleOpen = useCallback(
@@ -589,20 +665,27 @@ export function FurnitureConfigurator() {
       });
       setConfig({ ...config, columns: newCols });
     },
-    [config],
+    [config, setConfig],
   );
 
-  const toggleSelectCell = useCallback((colId: string, zoneId: string, multi: boolean, sectionIdx?: number) => {
-    setSelected((prev) => {
-      const isAlreadySelected = prev.some((s) => s.colId === colId && s.zoneId === zoneId && s.sectionIdx === sectionIdx);
-      if (multi) {
-        if (isAlreadySelected)
-          return prev.filter((s) => !(s.colId === colId && s.zoneId === zoneId && s.sectionIdx === sectionIdx));
-        return [...prev, { colId, zoneId, sectionIdx }];
-      }
-      return [{ colId, zoneId, sectionIdx }];
-    });
-  }, []);
+  const toggleSelectCell = useCallback(
+    (colId: string, zoneId: string, multi: boolean, sectionIdx?: number) => {
+      setSelected((prev) => {
+        const isAlreadySelected = prev.some(
+          (s) => s.colId === colId && s.zoneId === zoneId && s.sectionIdx === sectionIdx,
+        );
+        if (multi) {
+          if (isAlreadySelected)
+            return prev.filter(
+              (s) => !(s.colId === colId && s.zoneId === zoneId && s.sectionIdx === sectionIdx),
+            );
+          return [...prev, { colId, zoneId, sectionIdx }];
+        }
+        return [{ colId, zoneId, sectionIdx }];
+      });
+    },
+    [setSelected],
+  );
 
   const handleSelectMultipleCells = useCallback(
     (newlySelected: SelectedCell[], additive: boolean) => {
@@ -617,8 +700,12 @@ export function FurnitureConfigurator() {
         return updated;
       });
     },
-    [],
+    [setSelected],
   );
+
+  const handleClearSelection = useCallback(() => {
+    setSelected([]);
+  }, [setSelected]);
 
   const handleZoom = (delta: number) => setZoom((prev) => Math.min(3, Math.max(0.5, prev + delta)));
   const resetZoom = () => {
@@ -650,7 +737,7 @@ export function FurnitureConfigurator() {
   return (
     <div className="h-screen flex flex-col text-ink bg-[#FDFCFB] overflow-hidden font-sans">
       {/* Header / Top Bar (Optional, can be added later) */}
-      
+
       <main className="flex-1 flex overflow-hidden">
         {/* LEFT — Canvas & BOM */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar bg-[#F6F4F0]">
@@ -661,7 +748,7 @@ export function FurnitureConfigurator() {
                 User said "окно просмотра слева не съезжало".
                 Let's make the canvas container STICKY within the scroll area.
             */}
-            <div className="sticky top-0 z-10 pt-2 pb-4 bg-[#F6F4F0]">
+            <div className="sticky top-0 z-20 pt-2 pb-4 bg-[#F6F4F0]">
               <div
                 className="relative w-full rounded-[32px] overflow-hidden min-h-[600px] lg:h-[calc(100vh-300px)] border border-[#E5E0D8] shadow-sm transition-all duration-500"
                 style={{ backgroundColor: "#FDFCFB" }}
@@ -676,7 +763,7 @@ export function FurnitureConfigurator() {
                     backgroundPosition: "center center",
                   }}
                 />
-                
+
                 {/* 3D Content */}
                 <div
                   ref={canvasRef}
@@ -697,7 +784,7 @@ export function FurnitureConfigurator() {
                     selected={selected}
                     onSelectCell={toggleSelectCell}
                     onSelectMultipleCells={handleSelectMultipleCells}
-                    onClearSelection={() => setSelected([])}
+                    onClearSelection={handleClearSelection}
                     onCellFillChange={handleCellFillChange}
                     onConfigChange={setConfig}
                     hoveringDelete={hoveringDelete}
@@ -712,7 +799,16 @@ export function FurnitureConfigurator() {
                       className="w-12 h-12 flex items-center justify-center bg-white border border-[#E5E0D8] rounded-full text-[#8C847A] shadow-md hover:text-accent hover:border-accent/40 transition-all active:scale-90"
                       title="Центрировать"
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
                         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
